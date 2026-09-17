@@ -1,0 +1,62 @@
+import { NavigationContainer } from "@react-navigation/native";
+import type { Session } from "@supabase/supabase-js";
+import React, { useEffect, useState } from "react";
+import { ActivityIndicator, View } from "react-native";
+
+import { AuthNavigator } from "./AuthNavigator";
+import { MainTabNavigator } from "./MainTabNavigator";
+
+import { initAnalytics, identify } from "@/lib/analytics";
+import { initNotifications } from "@/lib/notifications";
+import { initRevenueCat } from "@/lib/revenuecat";
+import { supabase } from "@/lib/supabase";
+import { colors } from "@/theme/colors";
+
+export function RootNavigator() {
+  const [session, setSession] = useState<Session | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    initAnalytics();
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setLoading(false);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, newSession) => {
+      setSession(newSession);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (!session?.user) return;
+    identify(session.user.id, { email: session.user.email ?? "" });
+    initNotifications();
+    initRevenueCat(session.user.id);
+  }, [session?.user?.id]);
+
+  if (loading) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: colors.background,
+          justifyContent: "center",
+        }}
+      >
+        <ActivityIndicator color={colors.accent} />
+      </View>
+    );
+  }
+
+  return (
+    <NavigationContainer>
+      {session ? <MainTabNavigator /> : <AuthNavigator />}
+    </NavigationContainer>
+  );
+}

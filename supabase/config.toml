@@ -1,0 +1,36 @@
+# Local Supabase CLI config (`supabase start` / `supabase db push`).
+# See https://supabase.com/docs/guides/local-development/cli/config
+
+project_id = "piton"
+
+[api]
+enabled = true
+port = 54321
+
+[db]
+port = 54322
+
+[studio]
+enabled = true
+port = 54323
+
+[storage]
+enabled = true
+
+[auth]
+enabled = true
+site_url = "piton://"
+additional_redirect_urls = ["piton://auth-callback"]
+
+[auth.external.apple]
+enabled = true
+client_id = "com.piton.app"
+secret = "env(APPLE_AUTH_SECRET)"
+
+[auth.external.google]
+enabled = true
+client_id = "env(GOOGLE_AUTH_CLIENT_ID)"
+secret = "env(GOOGLE_AUTH_SECRET)"
+
+[functions]
+enabled = true

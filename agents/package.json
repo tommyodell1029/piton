@@ -1,0 +1,21 @@
+{
+  "name": "piton-agents",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "pm": "node product-manager-agent/index.js",
+    "reviews": "node review-management-agent/index.js",
+    "growth": "node growth-agent/index.js",
+    "content": "node content-creation-agent/index.js",
+    "aso": "node aso-agent/index.js",
+    "analytics": "node analytics-agent/index.js",
+    "all": "npm run pm && npm run reviews && npm run growth && npm run content && npm run aso && npm run analytics"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.4"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

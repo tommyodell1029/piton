@@ -1,0 +1,74 @@
+{
+  "expo": {
+    "name": "Piton",
+    "slug": "piton",
+    "scheme": "piton",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0B0B0F"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "bundleIdentifier": "com.piton.app",
+      "supportsTablet": false,
+      "infoPlist": {
+        "NSCameraUsageDescription": "Piton uses your camera to verify habit completion with photo proof.",
+        "NSLocationWhenInUseUsageDescription": "Piton uses your location to verify location-based habits like walks or gym visits.",
+        "NSPhotoLibraryUsageDescription": "Piton needs access to your photos so you can submit proof of your habit.",
+        "NSHealthShareUsageDescription": "Piton reads step count and workout data from Apple Health to verify fitness habits.",
+        "UIBackgroundModes": ["location", "fetch"]
+      },
+      "entitlements": {
+        "com.apple.developer.healthkit": true
+      }
+    },
+    "android": {
+      "package": "com.piton.app",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0B0B0F"
+      },
+      "permissions": [
+        "CAMERA",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "ACTIVITY_RECOGNITION",
+        "READ_MEDIA_IMAGES"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-apple-authentication",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Piton uses your camera to verify habit completion with photo proof."
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Piton uses your location to verify location-based habits."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Piton needs access to your photos so you can submit proof of your habit."
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "REPLACE_WITH_EAS_PROJECT_ID"
+      }
+    }
+  }
+}
