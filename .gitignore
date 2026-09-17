@@ -22,3 +22,6 @@ coverage/
 # Agents
 agents/node_modules/
 agents/reports/
+
+# Supabase CLI cache
+supabase/.temp/

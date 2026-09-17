@@ -20,16 +20,24 @@ import { colors, spacing } from "@/theme/colors";
 
 WebBrowser.maybeCompleteAuthSession();
 
-const googleClientIds = {
-  iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
-  androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
-  webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
-};
 const googleConfigured = Boolean(
-  googleClientIds.iosClientId ||
-  googleClientIds.androidClientId ||
-  googleClientIds.webClientId,
+  process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID ||
+  process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID ||
+  process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
 );
+
+// expo-auth-session's Google provider validates its client ID params as soon
+// as the hook runs, throwing if the one for the current platform is missing
+// — even before any sign-in is attempted. Since it's a hook it must run
+// unconditionally, so unconfigured platforms get a harmless placeholder
+// instead; `googleConfigured` (real env vars only) is what actually gates
+// showing the button, so the placeholder is never exercised.
+const googleClientIds = {
+  iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID || "not-configured",
+  androidClientId:
+    process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID || "not-configured",
+  webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || "not-configured",
+};
 
 export function SignInScreen({ navigation }: any) {
   const [email, setEmail] = useState("");
