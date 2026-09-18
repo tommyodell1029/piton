@@ -29,10 +29,6 @@ Deno.serve(async (req) => {
     return new Response("ok", { headers: corsHeaders });
   }
 
-  console.log(
-    `[diagnostic] ANTHROPIC_API_KEY present: ${Boolean(ANTHROPIC_API_KEY)}, OPENAI_API_KEY present: ${Boolean(OPENAI_API_KEY)}`
-  );
-
   try {
     const authHeader = req.headers.get("Authorization") ?? "";
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {

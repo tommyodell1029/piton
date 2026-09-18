@@ -3,19 +3,27 @@
 Built as of the initial scaffold commit. Read this before assuming
 something "just works."
 
-## Backend: live
+## Backend: live and confirmed working end-to-end
 
 The app is wired to a real Supabase project (`vqsxctinikqphurhoael`, us-east-1).
 The full schema, RLS policies, triggers, and the `ai-coach` / `verify-image`
 Edge Functions are deployed and active; security advisors are clean. Local
 `.env` holds the real project URL/anon key (gitignored, not committed).
 
-Still needed for the AI features to actually respond: set `OPENAI_API_KEY`
-and/or `ANTHROPIC_API_KEY` as Edge Function secrets (Supabase Dashboard →
-Edge Functions → Secrets, or `supabase secrets set` from a machine with
-normal internet access — this repo's sandbox can't reach supabase.com to do
-it via CLI). Apple/Google OAuth providers also still need enabling under
-Authentication → Providers if you want those sign-in buttons live.
+Verified live against a real device (not just this sandbox): sign-up,
+sign-in, and the AI Coach getting real Claude replies via the `ai-coach`
+Edge Function all work. Two real bugs were found and fixed along the way:
+
+- Both Edge Functions had `verify_jwt: true` at the gateway level, which
+  rejects the browser's unauthenticated CORS preflight `OPTIONS` request
+  before the function code ever runs. Fixed by moving auth checks into the
+  function code (via the caller's own JWT) and deploying with
+  `verify_jwt: false` plus explicit CORS headers on every response.
+- `verify-image` didn't check that the caller actually owned the habit being
+  verified (it used the service-role key with no ownership check) — fixed.
+
+Apple/Google OAuth providers still need enabling under Authentication →
+Providers if you want those sign-in buttons live.
 
 ## Fully working (once you point it at a real Supabase project)
 
