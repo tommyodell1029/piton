@@ -3,6 +3,20 @@
 Built as of the initial scaffold commit. Read this before assuming
 something "just works."
 
+## Backend: live
+
+The app is wired to a real Supabase project (`vqsxctinikqphurhoael`, us-east-1).
+The full schema, RLS policies, triggers, and the `ai-coach` / `verify-image`
+Edge Functions are deployed and active; security advisors are clean. Local
+`.env` holds the real project URL/anon key (gitignored, not committed).
+
+Still needed for the AI features to actually respond: set `OPENAI_API_KEY`
+and/or `ANTHROPIC_API_KEY` as Edge Function secrets (Supabase Dashboard →
+Edge Functions → Secrets, or `supabase secrets set` from a machine with
+normal internet access — this repo's sandbox can't reach supabase.com to do
+it via CLI). Apple/Google OAuth providers also still need enabling under
+Authentication → Providers if you want those sign-in buttons live.
+
 ## Fully working (once you point it at a real Supabase project)
 
 - Email sign-up/sign-in, session persistence
