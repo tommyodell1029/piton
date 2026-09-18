@@ -8,7 +8,7 @@ import { getMyProfile, listMyBadges, xpForLevel } from "@/lib/gamification";
 import { colors, radii, spacing } from "@/theme/colors";
 import type { Badge, UserProfile } from "@/types";
 
-export function ProfileScreen() {
+export function ProfileScreen({ navigation }: any) {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [badges, setBadges] = useState<Badge[]>([]);
 
@@ -61,6 +61,13 @@ export function ProfileScreen() {
           <Text style={styles.empty}>No badges yet — keep proving it.</Text>
         }
       />
+
+      {!profile.isPremium && (
+        <Button
+          label="Upgrade to Premium"
+          onPress={() => navigation.navigate("Paywall")}
+        />
+      )}
 
       <Button
         label="Sign out"

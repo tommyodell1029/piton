@@ -17,9 +17,11 @@ and feels good.
 - [x] Badges (seeded, awarded manually for now — see Beta)
 - [x] Basic social: friends, groups, challenges, global leaderboard
 - [x] AI Coach chat (Edge Function, Claude/OpenAI)
-- [ ] HealthKit / Health Connect (needs custom dev client — see `src/lib/health.ts`)
-- [ ] Paywall / RevenueCat wiring (needs dev client)
-- [ ] Push notifications via OneSignal (needs dev client)
+- [x] HealthKit / Health Connect code written (`src/lib/health.native.ts`) — needs an
+      EAS dev client build to actually run; unverified on a device
+- [x] RevenueCat wiring + a minimal paywall screen (`src/lib/revenuecat.native.ts`,
+      `src/screens/profile/PaywallScreen.tsx`) — same dev-client caveat
+- [x] OneSignal wiring (`src/lib/notifications.native.ts`) — same dev-client caveat
 - [x] Onboarding flow (4-slide intro shown once per device before sign-in)
 
 **Exit criteria:** internal team + 10-20 friendly testers can create a
@@ -28,9 +30,16 @@ habit, submit proof daily for a week, and the streak/XP numbers are correct.
 ## Phase 2 — Beta
 
 - [x] Automatic badge awarding (triggers on streak milestones, not just seeded rows)
-- HealthKit/Health Connect live (requires EAS dev client build)
-- RevenueCat paywall live with the $7.99/mo, $59/yr products
-- OneSignal habit reminder notifications (smart timing based on cadence)
+- Produce an actual EAS development client build and verify HealthKit,
+  Health Connect, RevenueCat, and OneSignal on real devices — the code
+  exists (see Phase 1) but has never run outside a typecheck
+- RevenueCat paywall live with the $7.99/mo, $59/yr products configured as
+  real offerings (screen exists, needs a RevenueCat API key + offerings)
+- OneSignal habit reminder notifications (smart timing based on cadence —
+  SDK is initialized, but nothing schedules a reminder yet)
+- Add the Health Connect permissions-rationale `activity-alias` to
+  AndroidManifest.xml by hand after prebuild (no Expo config-plugin path
+  for it — see docs/STATUS.md)
 - TestFlight + Play Internal Testing distribution via EAS
 - Crash reporting (Sentry or Expo's built-in) wired into CI
 - Analytics SDKs actually initialized (Mixpanel/PostHog/Firebase — currently

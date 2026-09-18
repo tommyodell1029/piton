@@ -7,6 +7,8 @@
 - Google Play Console developer account (for Android)
 - Samsung Galaxy Store Seller account (optional, phase 3+)
 - A Supabase project (production, separate from any local/dev project)
+- A RevenueCat project (for the paywall — see [Native modules](#native-modules-revenuecat--onesignal--health) below)
+- A OneSignal app (for push notifications — same section)
 
 ## One-time setup
 
@@ -59,7 +61,8 @@ through the Samsung Seller Portal. Store assets live in `docs/ASO.md`.
 ## Building
 
 ```bash
-# Development client (for testing native modules like HealthKit that Expo Go can't load)
+# Development client (required — see below — to test HealthKit, Health
+# Connect, RevenueCat, and OneSignal, none of which Expo Go can load)
 eas build --platform all --profile development
 
 # Internal testing
@@ -73,6 +76,57 @@ Or trigger the `EAS Build & Submit` GitHub Actions workflow
 (`.github/workflows/eas-build.yml`) manually from the Actions tab, or by
 pushing a tag like `v1.0.0`. Requires the `EXPO_TOKEN` repo secret (from
 `eas whoami --json` / expo.dev account settings → Access Tokens).
+
+## Native modules: RevenueCat + OneSignal + Health
+
+`src/lib/health.native.ts`, `revenuecat.native.ts`, and
+`notifications.native.ts` have real implementations, but nothing in this
+section has ever run on real hardware from this repo's build environment —
+see `docs/STATUS.md` for why. The first `eas build --profile development`
+run is also the first real test of all three; expect to debug on-device.
+
+### RevenueCat
+
+1. Create a project in the RevenueCat dashboard, add the iOS app (bundle ID
+   `com.piton.app`) and Android app (package `com.piton.app`).
+2. Create the products in App Store Connect / Play Console first
+   ($7.99/mo, $59/yr, or whatever the current pricing is), then attach them
+   to RevenueCat as products and group them into an "default" Offering —
+   `getPaywallPackages()` reads the current offering's packages, so
+   `PaywallScreen` shows "No plans available" until this exists.
+3. Copy the iOS and Android public SDK keys (RevenueCat → Project settings
+   → API keys) into `EXPO_PUBLIC_REVENUECAT_IOS_KEY` /
+   `EXPO_PUBLIC_REVENUECAT_ANDROID_KEY` (`.env` locally, EAS secrets / repo
+   secrets for CI builds).
+4. Sandbox-test purchases require a real device build (development or
+   TestFlight/Internal Testing profile) — the App Store/Play sandbox
+   purchase flow doesn't work in a simulator for iOS.
+
+### OneSignal
+
+1. Create a OneSignal app, add iOS (APNs key/cert) and Android (FCM server
+   key or service account) push credentials under Settings → Platforms.
+2. Copy the OneSignal App ID into `EXPO_PUBLIC_ONESIGNAL_APP_ID`.
+3. `onesignal-expo-plugin` is configured in `app.json` with
+   `"mode": "development"` — switch it to `"production"` for
+   preview/production build profiles (`eas.json` can override `extra`/env
+   per profile, or maintain a separate `app.config.js` branch) before
+   shipping, otherwise push delivery silently uses the wrong APNs
+   environment.
+
+### HealthKit / Health Connect
+
+- iOS needs no manual step beyond the `react-native-health` config plugin
+  already in `app.json` (declares the HealthKit entitlement + usage
+  description).
+- Android (Health Connect) needs one manual step this repo can't automate:
+  after `expo prebuild` generates `android/`, add the permissions-rationale
+  `activity-alias` to `android/app/src/main/AndroidManifest.xml` per
+  [Health Connect's docs](https://developer.android.com/health-and-fitness/guides/health-connect/develop/get-started)
+  — there's no Expo config-plugin hook for it yet. If you're building via
+  managed `eas build` (no local `prebuild` step you control), you'll need a
+  config plugin of your own (an `withAndroidManifest` mod) to inject it, or
+  switch that one build to bare workflow.
 
 ## Submitting
 
@@ -107,6 +161,8 @@ Also configure Apple/Google as Auth providers under Supabase → Authentication
 - `EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_ANON_KEY` — app + CI
 - `SUPABASE_SERVICE_ROLE_KEY` — agents only, never in the app
 - `ANTHROPIC_API_KEY`, `OPENAI_API_KEY` — agents + Edge Function secrets (set separately via `supabase secrets set`)
+- `EXPO_PUBLIC_REVENUECAT_IOS_KEY`, `EXPO_PUBLIC_REVENUECAT_ANDROID_KEY` — paywall (public SDK keys, safe client-side)
+- `EXPO_PUBLIC_ONESIGNAL_APP_ID` — push notifications (public app ID, safe client-side)
 - `APP_STORE_CONNECT_ISSUER_ID`, `APP_STORE_CONNECT_KEY_ID`,
   `APP_STORE_CONNECT_PRIVATE_KEY`, `APP_STORE_CONNECT_APP_ID` — review agent + submission
 - `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON` — review agent + submission

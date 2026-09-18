@@ -47,7 +47,7 @@ export function RootNavigator() {
   useEffect(() => {
     if (!session?.user) return;
     identify(session.user.id, { email: session.user.email ?? "" });
-    initNotifications();
+    initNotifications(session.user.id);
     initRevenueCat(session.user.id);
   }, [session?.user?.id]);
 

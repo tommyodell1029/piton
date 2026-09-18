@@ -38,7 +38,10 @@
         "ACCESS_FINE_LOCATION",
         "ACCESS_COARSE_LOCATION",
         "ACTIVITY_RECOGNITION",
-        "READ_MEDIA_IMAGES"
+        "READ_MEDIA_IMAGES",
+        "android.permission.health.READ_STEPS",
+        "android.permission.health.READ_ACTIVE_CALORIES_BURNED",
+        "android.permission.health.READ_EXERCISE"
       ]
     },
     "web": {
@@ -62,6 +65,29 @@
         "expo-image-picker",
         {
           "photosPermission": "Piton needs access to your photos so you can submit proof of your habit."
+        }
+      ],
+      [
+        "react-native-health",
+        {
+          "healthSharePermission": "Piton reads step count and workout data from Apple Health to verify fitness habits."
+        }
+      ],
+      "react-native-health-connect",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "compileSdkVersion": 36,
+            "targetSdkVersion": 36,
+            "minSdkVersion": 26
+          }
+        }
+      ],
+      [
+        "onesignal-expo-plugin",
+        {
+          "mode": "development"
         }
       ]
     ],

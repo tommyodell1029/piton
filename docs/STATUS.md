@@ -54,19 +54,79 @@ Providers if you want those sign-in buttons live.
   or XP leaked into the real account). `challenge_winner` stays manual —
   there's no challenge-results computation to hook yet.
 
-## Scaffolded — interface is real, implementation needs native modules
+## Native modules: real code written, unverified on a device
 
-These all share one root cause: **Expo Go can't load them.** Each needs an
-EAS development client build (`eas build --profile development`) plus the
-listed native package.
+HealthKit, Health Connect, RevenueCat, and OneSignal are no longer stubs —
+each has a real implementation against the vendor's documented API,
+installed as a dependency, and wired into the app's screens (Health
+verification, a new Paywall screen off Profile → "Upgrade to Premium").
+What's still true regardless: **Expo Go can't load any of them** — none of
+this runs until someone produces a custom EAS development client build
+(`eas build --profile development`), which needs Xcode/Android SDK or a
+reachable EAS cloud build — neither exists in this sandbox, so none of the
+code below has run on real hardware. It's written directly from each
+package's docs and validated by typecheck/lint plus a full web regression
+pass (the one thing this sandbox *can* run), not by a device test.
 
-- **HealthKit / Health Connect** (`src/lib/health.ts`) — needs
-  `react-native-health` (iOS) / `react-native-health-connect` (Android)
-- **OneSignal push** (`src/lib/notifications.ts`) — needs
-  `react-native-onesignal`
-- **RevenueCat** (`src/lib/revenuecat.ts`) — needs `react-native-purchases`
-- **Google Sign-In** — `expo-auth-session` flow needs real
-  `EXPO_PUBLIC_GOOGLE_*` client IDs from Google Cloud Console
+**The specific risk this had to design around:** all three native packages
+are imported from code that sits in the app's always-mounted tree (the
+health verification screen, `PaywallScreen`, and RootNavigator's
+post-login effect that calls `initRevenueCat`/`initNotifications` on every
+launch). A plain top-level `import` of a native-only package would execute
+at app startup on every iOS/Android launch — including under Expo Go,
+where the compiled native side doesn't exist — and could crash the whole
+app, not just the feature using it. Two mitigations, both load-bearing:
+
+1. **Platform-specific files.** Each integration is split into
+   `*.native.ts` (real code, only ever bundled for ios/android) and
+   `*.web.ts` (safe no-op, bundled for web) — Metro's own platform
+   resolution picks the right one, so neither platform's bundle ever
+   contains the other's native module. A bare `health.ts` /
+   `revenuecat.ts` / `notifications.ts` file also exists in each case, but
+   purely so `tsc` (which doesn't do Metro's per-platform resolution) can
+   resolve the import — Metro never actually uses that file's content on
+   any platform.
+2. **Lazy, guarded `require()`.** Inside the `.native.ts` files, the
+   actual native package is loaded via `require()` **inside each
+   function**, wrapped in try/catch — never as a top-level `import`. A
+   missing native module (Expo Go, or before a dev client exists) degrades
+   to the same "unavailable" result the web variant returns, instead of
+   throwing at startup.
+
+This was verified for real: a full Playwright pass against the web build
+after adding all four packages showed zero new console/page errors and the
+same working sign-in flow as before — confirming the split actually
+prevents the regression it's designed to prevent, on the one platform this
+sandbox can test.
+
+- **HealthKit / Health Connect** (`src/lib/health.native.ts`) — reads
+  today's steps, active-energy, and exercise minutes. One known gap:
+  Health Connect also requires a manual `AndroidManifest.xml` addition
+  (an `activity-alias` for the permissions-rationale intent,
+  `androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE`) that Expo's config
+  plugin system has no declarative way to express — this has to be added
+  by hand after `expo prebuild` generates the Android project, per
+  [Health Connect's permissions docs](https://developer.android.com/health-and-fitness/guides/health-connect/develop/get-started).
+- **RevenueCat** (`src/lib/revenuecat.native.ts`) — configure, fetch
+  offerings, purchase, entitlement check. `PaywallScreen` (off Profile →
+  "Upgrade to Premium") lists real offerings and drives a purchase — but
+  will show "No plans available" until a RevenueCat API key and offerings
+  exist.
+- **OneSignal push** (`src/lib/notifications.native.ts`) — initializes the
+  SDK and calls `login(userId)` so pushes can be targeted per-account.
+- **Google Sign-In** — not a native-module problem (the existing
+  `expo-auth-session` browser-redirect flow already works in Expo Go);
+  just needs real `EXPO_PUBLIC_GOOGLE_*` client IDs from Google Cloud
+  Console.
+
+Config added for all of this: `app.json` now includes the
+`react-native-health`, `react-native-health-connect`, and
+`onesignal-expo-plugin` config plugins, `expo-build-properties` (Health
+Connect needs Android SDK 36/minSdk 26), and the Health Connect Android
+permissions. Validated with `npx expo config` (resolves cleanly, and shows
+OneSignal's iOS notification-service-extension config landed correctly) —
+this is as far as config-plugin validation goes without an actual native
+build.
 
 ## Scaffolded — needs vendor credentials only (no native module gap)
 
@@ -80,8 +140,11 @@ listed native package.
   this also means `social_starter` has no reachable UI path yet even though
   the award trigger is live and correct; wiring an accept-request flow
   would make it earnable)
-- Paywall UI
-- Push notification scheduling logic (habit reminders)
+- Push notification scheduling logic (habit reminders) — OneSignal is
+  initialized and can receive targeted sends, but nothing in the app yet
+  schedules a reminder based on habit cadence
+- An actual EAS development client build — nothing native-module-related
+  above can be exercised until one exists (see the native modules section)
 
 ## Agents (`agents/`)
 

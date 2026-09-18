@@ -6,6 +6,7 @@ import { AICoachScreen } from "@/screens/coach/AICoachScreen";
 import { CreateHabitScreen } from "@/screens/habits/CreateHabitScreen";
 import { HabitDetailScreen } from "@/screens/habits/HabitDetailScreen";
 import { HabitListScreen } from "@/screens/habits/HabitListScreen";
+import { PaywallScreen } from "@/screens/profile/PaywallScreen";
 import { ProfileScreen } from "@/screens/profile/ProfileScreen";
 import { FriendsScreen } from "@/screens/social/FriendsScreen";
 import { LeaderboardScreen } from "@/screens/social/LeaderboardScreen";
@@ -16,6 +17,7 @@ import { TimerVerificationScreen } from "@/screens/verification/TimerVerificatio
 import { colors } from "@/theme/colors";
 
 const HabitsStack = createNativeStackNavigator();
+const ProfileStack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
 function HabitsStackNavigator() {
@@ -65,6 +67,28 @@ function HabitsStackNavigator() {
   );
 }
 
+function ProfileStackNavigator() {
+  return (
+    <ProfileStack.Navigator
+      screenOptions={{
+        headerStyle: { backgroundColor: colors.background },
+        headerTintColor: colors.textPrimary,
+      }}
+    >
+      <ProfileStack.Screen
+        name="ProfileHome"
+        component={ProfileScreen}
+        options={{ title: "Profile" }}
+      />
+      <ProfileStack.Screen
+        name="Paywall"
+        component={PaywallScreen}
+        options={{ title: "Upgrade" }}
+      />
+    </ProfileStack.Navigator>
+  );
+}
+
 export function MainTabNavigator() {
   return (
     <Tab.Navigator
@@ -82,7 +106,7 @@ export function MainTabNavigator() {
       <Tab.Screen name="Leaderboard" component={LeaderboardScreen} />
       <Tab.Screen name="Friends" component={FriendsScreen} />
       <Tab.Screen name="Coach" component={AICoachScreen} />
-      <Tab.Screen name="Profile" component={ProfileScreen} />
+      <Tab.Screen name="Profile" component={ProfileStackNavigator} />
     </Tab.Navigator>
   );
 }
