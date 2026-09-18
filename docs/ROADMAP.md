@@ -27,7 +27,7 @@ habit, submit proof daily for a week, and the streak/XP numbers are correct.
 
 ## Phase 2 — Beta
 
-- Automatic badge awarding (triggers on streak milestones, not just seeded rows)
+- [x] Automatic badge awarding (triggers on streak milestones, not just seeded rows)
 - HealthKit/Health Connect live (requires EAS dev client build)
 - RevenueCat paywall live with the $7.99/mo, $59/yr products
 - OneSignal habit reminder notifications (smart timing based on cadence)

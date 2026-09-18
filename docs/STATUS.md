@@ -46,6 +46,13 @@ Providers if you want those sign-in buttons live.
 - Full RLS-secured Postgres schema with 8+ tables and triggers
 - Onboarding: 4-slide intro (`src/screens/onboarding/OnboardingScreen.tsx`),
   shown once per device (AsyncStorage flag) before sign-in, skippable
+- Automatic badge awarding (`supabase/migrations/0002_badge_triggers.sql`):
+  `first_proof` on a user's first approved verification, `week_streak` /
+  `month_streak` at 7 and 30, `social_starter` when a friendship becomes
+  accepted — each also grants +25 bonus XP once. Verified with a real
+  transaction against the live database (rolled back after, so no test data
+  or XP leaked into the real account). `challenge_winner` stays manual —
+  there's no challenge-results computation to hook yet.
 
 ## Scaffolded — interface is real, implementation needs native modules
 
@@ -69,9 +76,10 @@ listed native package.
 
 ## Not built yet (roadmap Phase 2+)
 
-- Automatic badge-awarding logic (badges are seeded but nothing grants them
-  yet — needs milestone triggers)
-- Friend invite flow (currently requires knowing the other user's UUID)
+- Friend invite flow (currently requires knowing the other user's UUID —
+  this also means `social_starter` has no reachable UI path yet even though
+  the award trigger is live and correct; wiring an accept-request flow
+  would make it earnable)
 - Paywall UI
 - Push notification scheduling logic (habit reminders)
 
