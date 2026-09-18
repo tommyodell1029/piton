@@ -20,7 +20,7 @@ and feels good.
 - [ ] HealthKit / Health Connect (needs custom dev client — see `src/lib/health.ts`)
 - [ ] Paywall / RevenueCat wiring (needs dev client)
 - [ ] Push notifications via OneSignal (needs dev client)
-- [ ] Onboarding flow (currently drops straight into sign-in)
+- [x] Onboarding flow (4-slide intro shown once per device before sign-in)
 
 **Exit criteria:** internal team + 10-20 friendly testers can create a
 habit, submit proof daily for a week, and the streak/XP numbers are correct.

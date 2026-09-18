@@ -8,21 +8,32 @@ import { MainTabNavigator } from "./MainTabNavigator";
 
 import { initAnalytics, identify } from "@/lib/analytics";
 import { initNotifications } from "@/lib/notifications";
+import { hasCompletedOnboarding } from "@/lib/onboarding";
 import { initRevenueCat } from "@/lib/revenuecat";
 import { supabase } from "@/lib/supabase";
+import { OnboardingScreen } from "@/screens/onboarding/OnboardingScreen";
 import { colors } from "@/theme/colors";
 
 export function RootNavigator() {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [needsOnboarding, setNeedsOnboarding] = useState(false);
 
   useEffect(() => {
     initAnalytics();
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setLoading(false);
-    });
+    Promise.all([supabase.auth.getSession(), hasCompletedOnboarding()]).then(
+      ([
+        {
+          data: { session },
+        },
+        completed,
+      ]) => {
+        setSession(session);
+        setNeedsOnboarding(!completed);
+        setLoading(false);
+      },
+    );
 
     const {
       data: { subscription },
@@ -52,6 +63,10 @@ export function RootNavigator() {
         <ActivityIndicator color={colors.accent} />
       </View>
     );
+  }
+
+  if (!session && needsOnboarding) {
+    return <OnboardingScreen onComplete={() => setNeedsOnboarding(false)} />;
   }
 
   return (

@@ -47,6 +47,9 @@ export function track(event: string, properties: EventProperties = {}) {
 
 /** Standard event names kept in one place so agents (PM/Growth/Analytics) can rely on them. */
 export const AnalyticsEvents = {
+  ONBOARDING_SLIDE_VIEWED: "onboarding_slide_viewed",
+  ONBOARDING_SKIPPED: "onboarding_skipped",
+  ONBOARDING_COMPLETED: "onboarding_completed",
   HABIT_CREATED: "habit_created",
   VERIFICATION_SUBMITTED: "verification_submitted",
   VERIFICATION_APPROVED: "verification_approved",

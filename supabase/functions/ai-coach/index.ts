@@ -20,7 +20,8 @@ const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
@@ -44,15 +45,21 @@ Deno.serve(async (req) => {
     const mode: string = body.mode ?? "chat";
 
     const [{ data: habits }, { data: streaks }] = await Promise.all([
-      supabase.from("habits").select("title, category, cadence").is("archived_at", null),
+      supabase
+        .from("habits")
+        .select("title, category, cadence")
+        .is("archived_at", null),
       supabase.from("streaks").select("current_count, best_count"),
     ]);
 
     const context = `User has ${habits?.length ?? 0} active habits: ${
-      habits?.map((h) => `${h.title} (${h.category}, ${h.cadence})`).join(", ") || "none yet"
+      habits
+        ?.map((h) => `${h.title} (${h.category}, ${h.cadence})`)
+        .join(", ") || "none yet"
     }. Streak summary: ${
-      streaks?.map((s) => `current ${s.current_count}, best ${s.best_count}`).join("; ") ||
-      "no streaks yet"
+      streaks
+        ?.map((s) => `current ${s.current_count}, best ${s.best_count}`)
+        .join("; ") || "no streaks yet"
     }.`;
 
     let systemPrompt =
@@ -66,7 +73,10 @@ Deno.serve(async (req) => {
         ' Respond ONLY with JSON: {"recommendations": string[]} — 3 short habit suggestions.';
       userPrompt = `${context}\nSuggest 3 new habits this user doesn't already have, each provable via photo, GPS, timer, or health data.`;
     } else {
-      const history = (body.history ?? []) as { role: string; content: string }[];
+      const history = (body.history ?? []) as {
+        role: string;
+        content: string;
+      }[];
       userPrompt = `${context}\n\nConversation so far:\n${history
         .map((m) => `${m.role}: ${m.content}`)
         .join("\n")}\n\nuser: ${body.message}`;
@@ -81,7 +91,10 @@ Deno.serve(async (req) => {
 
     return json({ reply });
   } catch (err) {
-    console.error("[ai-coach] error:", err instanceof Error ? err.message : String(err));
+    console.error(
+      "[ai-coach] error:",
+      err instanceof Error ? err.message : String(err),
+    );
     return json({ error: String(err) }, 500);
   }
 });
@@ -131,7 +144,10 @@ async function callLlm(system: string, prompt: string): Promise<string> {
       throw new Error(`OpenAI API error ${res.status}: ${errText}`);
     }
     const data = await res.json();
-    return data.choices?.[0]?.message?.content ?? "Sorry, I couldn't come up with a reply.";
+    return (
+      data.choices?.[0]?.message?.content ??
+      "Sorry, I couldn't come up with a reply."
+    );
   }
 
   return "The AI coach needs an ANTHROPIC_API_KEY or OPENAI_API_KEY secret set on this Edge Function.";

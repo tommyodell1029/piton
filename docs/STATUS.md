@@ -44,6 +44,8 @@ Providers if you want those sign-in buttons live.
 - AI Coach chat, daily motivation, habit recommendations (Edge Function →
   Claude or OpenAI)
 - Full RLS-secured Postgres schema with 8+ tables and triggers
+- Onboarding: 4-slide intro (`src/screens/onboarding/OnboardingScreen.tsx`),
+  shown once per device (AsyncStorage flag) before sign-in, skippable
 
 ## Scaffolded — interface is real, implementation needs native modules
 
@@ -67,7 +69,6 @@ listed native package.
 
 ## Not built yet (roadmap Phase 2+)
 
-- Onboarding flow
 - Automatic badge-awarding logic (badges are seeded but nothing grants them
   yet — needs milestone triggers)
 - Friend invite flow (currently requires knowing the other user's UUID)

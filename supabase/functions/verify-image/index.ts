@@ -20,7 +20,8 @@ const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
@@ -57,7 +58,11 @@ Deno.serve(async (req) => {
 
     if (!OPENAI_API_KEY) {
       // No AI key configured yet — fall back to manual review instead of blocking the user.
-      return json({ approved: false, confidence: null, reason: "ai_not_configured" });
+      return json({
+        approved: false,
+        confidence: null,
+        reason: "ai_not_configured",
+      });
     }
 
     const prompt = `You are verifying proof-of-completion for a habit-tracking app called Piton. \
@@ -97,7 +102,8 @@ Respond ONLY with compact JSON: {"approved": boolean, "confidence": number betwe
 
     return json({
       approved: Boolean(parsed.approved),
-      confidence: typeof parsed.confidence === "number" ? parsed.confidence : null,
+      confidence:
+        typeof parsed.confidence === "number" ? parsed.confidence : null,
       reason: parsed.reason ?? "no_reason_given",
     });
   } catch (err) {
