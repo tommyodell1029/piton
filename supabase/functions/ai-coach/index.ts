@@ -5,7 +5,10 @@
 // (via the request's Authorization header, so RLS applies), then asks
 // Claude (preferred) or OpenAI for a reply. Keeps API keys server-side.
 //
-// Deploy: supabase functions deploy ai-coach
+// Deploy: supabase functions deploy ai-coach --no-verify-jwt
+// (auth is checked inside the function instead of at the gateway, so the
+// browser's CORS preflight OPTIONS request — which never carries an
+// Authorization header — isn't rejected before this code even runs.)
 // Secrets: supabase secrets set ANTHROPIC_API_KEY=sk-ant-... OPENAI_API_KEY=sk-...
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -15,7 +18,17 @@ const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
 
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+};
+
 Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
+  }
+
   try {
     const authHeader = req.headers.get("Authorization") ?? "";
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
@@ -31,21 +44,15 @@ Deno.serve(async (req) => {
     const mode: string = body.mode ?? "chat";
 
     const [{ data: habits }, { data: streaks }] = await Promise.all([
-      supabase
-        .from("habits")
-        .select("title, category, cadence")
-        .is("archived_at", null),
+      supabase.from("habits").select("title, category, cadence").is("archived_at", null),
       supabase.from("streaks").select("current_count, best_count"),
     ]);
 
     const context = `User has ${habits?.length ?? 0} active habits: ${
-      habits
-        ?.map((h) => `${h.title} (${h.category}, ${h.cadence})`)
-        .join(", ") || "none yet"
+      habits?.map((h) => `${h.title} (${h.category}, ${h.cadence})`).join(", ") || "none yet"
     }. Streak summary: ${
-      streaks
-        ?.map((s) => `current ${s.current_count}, best ${s.best_count}`)
-        .join("; ") || "no streaks yet"
+      streaks?.map((s) => `current ${s.current_count}, best ${s.best_count}`).join("; ") ||
+      "no streaks yet"
     }.`;
 
     let systemPrompt =
@@ -59,10 +66,7 @@ Deno.serve(async (req) => {
         ' Respond ONLY with JSON: {"recommendations": string[]} — 3 short habit suggestions.';
       userPrompt = `${context}\nSuggest 3 new habits this user doesn't already have, each provable via photo, GPS, timer, or health data.`;
     } else {
-      const history = (body.history ?? []) as {
-        role: string;
-        content: string;
-      }[];
+      const history = (body.history ?? []) as { role: string; content: string }[];
       userPrompt = `${context}\n\nConversation so far:\n${history
         .map((m) => `${m.role}: ${m.content}`)
         .join("\n")}\n\nuser: ${body.message}`;
@@ -97,6 +101,10 @@ async function callLlm(system: string, prompt: string): Promise<string> {
         messages: [{ role: "user", content: prompt }],
       }),
     });
+    if (!res.ok) {
+      const errText = await res.text();
+      throw new Error(`Anthropic API error ${res.status}: ${errText}`);
+    }
     const data = await res.json();
     return data.content?.[0]?.text ?? "Sorry, I couldn't come up with a reply.";
   }
@@ -117,11 +125,12 @@ async function callLlm(system: string, prompt: string): Promise<string> {
         max_tokens: 400,
       }),
     });
+    if (!res.ok) {
+      const errText = await res.text();
+      throw new Error(`OpenAI API error ${res.status}: ${errText}`);
+    }
     const data = await res.json();
-    return (
-      data.choices?.[0]?.message?.content ??
-      "Sorry, I couldn't come up with a reply."
-    );
+    return data.choices?.[0]?.message?.content ?? "Sorry, I couldn't come up with a reply.";
   }
 
   return "The AI coach needs an ANTHROPIC_API_KEY or OPENAI_API_KEY secret set on this Edge Function.";
@@ -138,6 +147,6 @@ function safeParseJson(text: string): Record<string, unknown> {
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...corsHeaders },
   });
 }
