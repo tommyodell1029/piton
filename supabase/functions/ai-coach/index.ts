@@ -85,6 +85,7 @@ Deno.serve(async (req) => {
 
     return json({ reply });
   } catch (err) {
+    console.error("[ai-coach] error:", err instanceof Error ? err.message : String(err));
     return json({ error: String(err) }, 500);
   }
 });
