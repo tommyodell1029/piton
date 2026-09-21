@@ -8,8 +8,11 @@ Tracking real status toward getting Piton live — not a wish list.
       --platform web` build, deployed on push to this branch). Native
       modules (HealthKit/RevenueCat/OneSignal) safely no-op on web.
 - [x] **Privacy policy + Terms of Service drafted** — `legal/privacy.html`
-      / `legal/terms.html`, served at `/privacy` and `/terms` on the web
-      deployment above. **Owner action required:** both have a
+      / `legal/terms.html`, live at
+      https://piton-web.vercel.app/privacy.html and
+      https://piton-web.vercel.app/terms.html (these are the URLs to paste
+      into App Store Connect / Play Console). **Owner action required:**
+      both have a
       `[ADD REAL CONTACT EMAIL BEFORE PUBLISHING]` placeholder — replace it
       with a real, monitored address before submitting to either store.
       Apple/Google both require a working contact method here.
@@ -183,6 +186,10 @@ directory left at the repo root:
   consumer app, unlike Odie (`piton-odie`), which stays owner-gated.
 - **Env vars:** `EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_ANON_KEY`
   (both public/safe client-side, same values as the mobile app)
+- **Privacy policy / terms:** served at their literal `.html` paths
+  (`/privacy.html`, `/terms.html`) — no clean-URL rewrite is configured,
+  since App Store Connect / Play Console just need a working URL, not a
+  pretty one.
 
 Redeploys automatically on every push to this branch (the repo's
 production branch). Google/Apple Sign-In buttons stay hidden on web until
