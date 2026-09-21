@@ -1,5 +1,33 @@
 # Deployment
 
+## Launch checklist (owner action vs. already done)
+
+Tracking real status toward getting Piton live — not a wish list.
+
+- [x] **Web app live** — https://piton-web.vercel.app (static `expo export
+      --platform web` build, deployed on push to this branch). Native
+      modules (HealthKit/RevenueCat/OneSignal) safely no-op on web.
+- [x] **Privacy policy + Terms of Service drafted** — `legal/privacy.html`
+      / `legal/terms.html`, served at `/privacy` and `/terms` on the web
+      deployment above. **Owner action required:** both have a
+      `[ADD REAL CONTACT EMAIL BEFORE PUBLISHING]` placeholder — replace it
+      with a real, monitored address before submitting to either store.
+      Apple/Google both require a working contact method here.
+- [ ] **Apple Developer Program enrollment** — not started. Owner action:
+      enroll at developer.apple.com ($99/year, ~24-48h to activate). See
+      iOS section below once you're in.
+- [ ] **Google Play Console account** — not started. Owner action: sign up
+      at play.google.com/console ($25 one-time).
+- [ ] **First EAS build** — never produced. This sandbox can't reach EAS's
+      cloud build service (network policy), so this has to run from a real
+      machine or GitHub Codespaces: `eas build --profile development` (see
+      Building below). This is also the first real test of HealthKit,
+      RevenueCat, and OneSignal — budget time to debug on-device issues.
+- [ ] **RevenueCat + OneSignal accounts** — not created; needed before a
+      production build is meaningful (see Native modules section below).
+- [ ] **Store listing submission** — blocked on all of the above. Copy
+      from `docs/ASO.md` once a build exists.
+
 ## Prerequisites
 
 - Expo account + `eas-cli` (`npm install -g eas-cli`)
@@ -138,6 +166,28 @@ eas submit --platform android --profile production
 Fill in the real `appleId` / `ascAppId` / `appleTeamId` and
 `serviceAccountKeyPath` in `eas.json` before running this (currently
 placeholders).
+
+## Web deployment (live now)
+
+The web build is a separate, much simpler path from the native stores —
+no Apple/Google review, no EAS build, no native module verification
+needed (they safely no-op on web per `src/lib/*.web.ts`).
+
+Deployed as Vercel project `piton-web`, linked to this repo, root
+directory left at the repo root:
+
+- **Build command:** `npx expo export --platform web && cp legal/privacy.html legal/terms.html dist/`
+- **Output directory:** `dist`
+- **Framework preset:** none (static export)
+- **SSO/Vercel Authentication:** explicitly disabled — this is a public
+  consumer app, unlike Odie (`piton-odie`), which stays owner-gated.
+- **Env vars:** `EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_ANON_KEY`
+  (both public/safe client-side, same values as the mobile app)
+
+Redeploys automatically on every push to this branch (the repo's
+production branch). Google/Apple Sign-In buttons stay hidden on web until
+real `EXPO_PUBLIC_GOOGLE_*` client IDs are set — everything else works
+identically to native.
 
 ## Supabase (production)
 
