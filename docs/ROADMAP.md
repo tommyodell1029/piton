@@ -3,6 +3,12 @@
 Target metrics for the whole roadmap: **D1 retention > 50%**, **D30 retention
 > 20%**, **4.7+ app rating**, **CAC below LTV**.
 
+This roadmap covers the Piton app itself. Odie (the operations command
+center at `odie/`, live at https://piton-odie.vercel.app) has its own
+roadmap in `docs/ODIE.md` — Phase 1 (auth, persistent task/approval state,
+a real command router, single-agent dispatch) is live; an execution
+engine, voice, push, and social publishing automation are not built yet.
+
 ## Phase 1 — MVP (this repo, current state)
 
 Goal: prove the core loop — create a habit, prove it, see a streak — works

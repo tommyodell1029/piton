@@ -152,4 +152,18 @@ See the integration matrix in `agents/README.md`. Short version: LLM calls
 and Supabase queries are real; App Store Connect and Google Play API clients
 are real (JWT auth implemented from scratch, zero extra deps); TikTok and
 Instagram data pulls are stubbed because both require an approved developer
-app before any API call can succeed — there's no way to fake that.
+app before any API call can succeed — there's no way to fake that. Every
+run now also writes a row to `odie_agent_runs` (see below) in addition to
+its local markdown report.
+
+## Odie — the command center (`odie/`)
+
+Live and deployed: https://piton-odie.vercel.app (owner-only auth, separate
+Next.js app, same Supabase project). Real: owner-gated auth, a persistent
+task/approval/agent-run state layer that didn't exist before
+(`supabase/migrations/0003_odie_state.sql`), a working Claude tool-use
+command router against real data, and single-agent GitHub Actions dispatch.
+Not real yet: an execution engine (tasks are tracked, not auto-run), voice,
+push, TikTok/Instagram/App Store review automation, live Edge Function
+polling. Full detail, including the two secrets that still need to be added
+on Vercel before the dashboard fully works, in `docs/ODIE.md`.
