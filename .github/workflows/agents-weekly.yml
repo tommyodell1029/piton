@@ -1,7 +1,21 @@
 name: Weekly Growth & Product Agents
 
 on:
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      agent:
+        description: "Run one agent instead of all six (npm script name in agents/package.json)"
+        required: false
+        default: "all"
+        type: choice
+        options:
+          - all
+          - pm
+          - reviews
+          - growth
+          - content
+          - aso
+          - analytics
   schedule:
     # Mondays 13:00 UTC
     - cron: "0 13 * * 1"
@@ -35,7 +49,7 @@ jobs:
           APP_STORE_CONNECT_APP_ID: ${{ secrets.APP_STORE_CONNECT_APP_ID }}
           GOOGLE_PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
           YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
-        run: npm run all
+        run: npm run ${{ inputs.agent || 'all' }}
 
       - name: Upload reports
         uses: actions/upload-artifact@v4
