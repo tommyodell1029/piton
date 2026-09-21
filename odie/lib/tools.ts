@@ -118,6 +118,19 @@ export const TOOL_DEFINITIONS = [
     },
   },
   {
+    name: "get_agent_run_report",
+    description:
+      "Fetch the full generated report for one agent run — e.g. the actual scripts/captions/hashtags/image-video prompts from a content-creation-agent run, not just its summary. Pass either run_id (from list_recent_agent_runs) or agent (to get that agent's most recent run).",
+    input_schema: {
+      type: "object",
+      properties: {
+        run_id: { type: "string" },
+        agent: { type: "string" },
+      },
+      required: [],
+    },
+  },
+  {
     name: "trigger_agent",
     description:
       "Dispatch one of Piton's real automation agents (product-manager, review-management, growth, content-creation, aso, analytics) to run now via its GitHub Actions workflow, instead of waiting for the weekly cron. Requires GITHUB_DISPATCH_TOKEN to be configured — if it isn't, say so plainly rather than claiming the agent ran.",
@@ -171,6 +184,8 @@ export async function executeTool(
       return createApproval(admin, input);
     case "decide_approval":
       return decideApproval(admin, input, ownerUserId);
+    case "get_agent_run_report":
+      return getAgentRunReport(admin, input);
     case "trigger_agent":
       return triggerAgent(input);
     default:
@@ -329,6 +344,33 @@ async function decideApproval(
 
   if (error) return { error: error.message };
   return { approval: data };
+}
+
+async function getAgentRunReport(
+  admin: SupabaseClient,
+  input: Record<string, unknown>,
+) {
+  let query = admin
+    .from("odie_agent_runs")
+    .select("id, agent, started_at, finished_at, status, summary, report")
+    .order("started_at", { ascending: false })
+    .limit(1);
+
+  if (typeof input.run_id === "string") {
+    query = admin
+      .from("odie_agent_runs")
+      .select("id, agent, started_at, finished_at, status, summary, report")
+      .eq("id", input.run_id)
+      .limit(1);
+  } else if (typeof input.agent === "string") {
+    query = query.eq("agent", input.agent);
+  }
+
+  const { data, error } = await query;
+  if (error) return { error: error.message };
+  if (!data || data.length === 0)
+    return { error: "No matching agent run found." };
+  return { run: data[0] };
 }
 
 async function triggerAgent(input: Record<string, unknown>) {
