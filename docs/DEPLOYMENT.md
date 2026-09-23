@@ -119,17 +119,43 @@ run is also the first real test of all three; expect to debug on-device.
 ### RevenueCat
 
 1. Create a project in the RevenueCat dashboard, add the iOS app (bundle ID
-   `com.piton.app`) and Android app (package `com.piton.app`).
-2. Create the products in App Store Connect / Play Console first
+   `com.piton.app`) and Android app (package `com.piton.app`). Getting the
+   apps' SDK keys doesn't require Apple/Google approval — you can do this
+   before either account is even active.
+2. Create an **entitlement** identified exactly `piton_premium` (Project →
+   Entitlements) — this must match `PREMIUM_ENTITLEMENT_ID` in
+   `src/lib/revenuecat.native.ts` byte-for-byte, or every entitlement
+   check in the app will silently read as "not premium."
+3. Create the products in App Store Connect / Play Console first
    ($7.99/mo, $59/yr, or whatever the current pricing is), then attach them
-   to RevenueCat as products and group them into an "default" Offering —
+   to RevenueCat as products, attach each product to the `piton_premium`
+   entitlement, and group them into the "default" Offering —
    `getPaywallPackages()` reads the current offering's packages, so
    `PaywallScreen` shows "No plans available" until this exists.
-3. Copy the iOS and Android public SDK keys (RevenueCat → Project settings
+4. Copy the iOS and Android public SDK keys (RevenueCat → Project settings
    → API keys) into `EXPO_PUBLIC_REVENUECAT_IOS_KEY` /
    `EXPO_PUBLIC_REVENUECAT_ANDROID_KEY` (`.env` locally, EAS secrets / repo
    secrets for CI builds).
-4. Sandbox-test purchases require a real device build (development or
+5. **Webhook → keep `profiles.is_premium` in sync server-side.** This is
+   what makes subscription status correct even when the app isn't open
+   (renewals, cancellations taking effect, billing failures) — client
+   writes to `profiles.is_premium` are blocked at the database level
+   (migration `0004_lock_down_server_authoritative_columns.sql`), so
+   without this webhook the column just never updates after the first
+   purchase.
+   - Generate a random secret yourself (e.g. `openssl rand -hex 32`).
+   - `supabase secrets set REVENUECAT_WEBHOOK_SECRET=<that value>`
+   - In RevenueCat: Project Settings → Integrations → Webhooks → add
+     `https://vqsxctinikqphurhoael.supabase.co/functions/v1/revenuecat-webhook`
+     as the URL, and paste the same secret into "Authorization header
+     value" (sent as `Bearer <secret>` — the function rejects anything
+     else, including requests sent before the secret is configured at
+     all — it fails closed, not open).
+6. **Customer Center** (self-serve cancel/manage/restore, wired to Profile
+   → "Manage subscription" via `openCustomerCenter()`) is configured
+   entirely in the RevenueCat dashboard under Customer Center — no extra
+   app code needed beyond what's already there.
+7. Sandbox-test purchases require a real device build (development or
    TestFlight/Internal Testing profile) — the App Store/Play sandbox
    purchase flow doesn't work in a simulator for iOS.
 
@@ -219,6 +245,7 @@ Also configure Apple/Google as Auth providers under Supabase → Authentication
 - `SUPABASE_SERVICE_ROLE_KEY` — agents only, never in the app
 - `ANTHROPIC_API_KEY`, `OPENAI_API_KEY` — agents + Edge Function secrets (set separately via `supabase secrets set`)
 - `EXPO_PUBLIC_REVENUECAT_IOS_KEY`, `EXPO_PUBLIC_REVENUECAT_ANDROID_KEY` — paywall (public SDK keys, safe client-side)
+- `REVENUECAT_WEBHOOK_SECRET` — Edge Function secret only (set via `supabase secrets set`, never in the app); keeps `profiles.is_premium` in sync — see the RevenueCat section above
 - `EXPO_PUBLIC_ONESIGNAL_APP_ID` — push notifications (public app ID, safe client-side)
 - `APP_STORE_CONNECT_ISSUER_ID`, `APP_STORE_CONNECT_KEY_ID`,
   `APP_STORE_CONNECT_PRIVATE_KEY`, `APP_STORE_CONNECT_APP_ID` — review agent + submission

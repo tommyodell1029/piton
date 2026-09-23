@@ -108,10 +108,22 @@ sandbox can test.
   by hand after `expo prebuild` generates the Android project, per
   [Health Connect's permissions docs](https://developer.android.com/health-and-fitness/guides/health-connect/develop/get-started).
 - **RevenueCat** (`src/lib/revenuecat.native.ts`) — configure, fetch
-  offerings, purchase, entitlement check. `PaywallScreen` (off Profile →
-  "Upgrade to Premium") lists real offerings and drives a purchase — but
-  will show "No plans available" until a RevenueCat API key and offerings
-  exist.
+  offerings, purchase, restore, live entitlement-change listener, plus
+  RevenueCat's own Customer Center (`openCustomerCenter()`, wired to
+  Profile → "Manage subscription") and dashboard-configurable paywall
+  (`presentPaywallIfNeeded()`, additive — Piton's default paywall is still
+  the hand-built `PaywallScreen`). `PaywallScreen` (off Profile → "Upgrade
+  to Premium") lists real offerings, drives a purchase, and has a "Restore
+  purchases" button — but will show "No plans available" until a
+  RevenueCat API key and offerings exist. Entitlement identifier is
+  `piton_premium` — must match the RevenueCat dashboard exactly.
+  `profiles.is_premium` is now server-authoritative: client writes to it
+  are blocked at the database level (`supabase/migrations/0004_lock_down_server_authoritative_columns.sql`,
+  which also closes the same pre-existing hole on `profiles.xp`), and it's
+  kept in sync by the new `revenuecat-webhook` Edge Function — configure
+  `REVENUECAT_WEBHOOK_SECRET` via `supabase secrets set` and point
+  RevenueCat's dashboard webhook at it before this actually does anything
+  (see `docs/DEPLOYMENT.md`).
 - **OneSignal push** (`src/lib/notifications.native.ts`) — initializes the
   SDK and calls `login(userId)` so pushes can be targeted per-account.
 - **Google Sign-In** — not a native-module problem (the existing

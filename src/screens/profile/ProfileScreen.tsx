@@ -5,6 +5,7 @@ import { FlatList, StyleSheet, Text, View } from "react-native";
 import { Button } from "@/components/Button";
 import { signOut } from "@/lib/auth";
 import { getMyProfile, listMyBadges, xpForLevel } from "@/lib/gamification";
+import { openCustomerCenter } from "@/lib/revenuecat";
 import { colors, radii, spacing } from "@/theme/colors";
 import type { Badge, UserProfile } from "@/types";
 
@@ -66,6 +67,14 @@ export function ProfileScreen({ navigation }: any) {
         <Button
           label="Upgrade to Premium"
           onPress={() => navigation.navigate("Paywall")}
+        />
+      )}
+
+      {profile.isPremium && (
+        <Button
+          label="Manage subscription"
+          variant="ghost"
+          onPress={() => openCustomerCenter()}
         />
       )}
 

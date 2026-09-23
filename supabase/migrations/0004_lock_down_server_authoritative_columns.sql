@@ -1,0 +1,21 @@
+-- profiles.xp is meant to be server-authoritative (set only by
+-- bump_streak_on_verification / award_badge, both SECURITY DEFINER), and
+-- profiles.is_premium is about to become server-authoritative too (set
+-- only by the revenuecat-webhook Edge Function via the service-role key).
+-- Neither was actually protected: "Users can update their own profile"
+-- has no column restriction, so any authenticated client could already
+-- call `update profiles set xp = 999999` or `set is_premium = true`
+-- directly.
+--
+-- A column-level REVOKE alone does NOT work here — Supabase's default
+-- `grant all on all tables in schema public to authenticated` is a
+-- table-wide grant, which supersedes any narrower column-level revoke
+-- (confirmed against information_schema.column_privileges: a first
+-- attempt using only `revoke update (xp, is_premium) ...` left both
+-- columns still updatable). The correct fix is to revoke the table-wide
+-- UPDATE grant entirely, then re-grant UPDATE only on the columns that
+-- should stay client-editable. SECURITY DEFINER functions and the
+-- service-role key both bypass this regardless, so nothing server-side
+-- breaks.
+revoke update on public.profiles from authenticated;
+grant update (display_name, avatar_url) on public.profiles to authenticated;

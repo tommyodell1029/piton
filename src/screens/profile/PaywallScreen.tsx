@@ -4,7 +4,11 @@ import { FlatList, StyleSheet, Text, View } from "react-native";
 
 import { Button } from "@/components/Button";
 import { track, AnalyticsEvents } from "@/lib/analytics";
-import { getPaywallPackages, purchasePackageById } from "@/lib/revenuecat";
+import {
+  getPaywallPackages,
+  purchasePackageById,
+  restorePurchases,
+} from "@/lib/revenuecat";
 import type { PaywallPackage } from "@/lib/revenuecat";
 import { colors, radii, spacing } from "@/theme/colors";
 
@@ -12,6 +16,7 @@ export function PaywallScreen({ navigation }: any) {
   const [packages, setPackages] = useState<PaywallPackage[]>([]);
   const [loading, setLoading] = useState(true);
   const [purchasingId, setPurchasingId] = useState<string | null>(null);
+  const [restoring, setRestoring] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useFocusEffect(
@@ -28,17 +33,36 @@ export function PaywallScreen({ navigation }: any) {
     setError(null);
     setPurchasingId(pkg.identifier);
     try {
-      const unlocked = await purchasePackageById(pkg.identifier);
-      if (unlocked) {
+      const outcome = await purchasePackageById(pkg.identifier);
+      if (outcome.status === "purchased" && outcome.isPremium) {
         track(AnalyticsEvents.SUBSCRIPTION_STARTED, {
           package: pkg.identifier,
         });
         navigation.goBack();
-      } else {
-        setError("Purchase didn't complete. Try again.");
+      } else if (outcome.status === "error") {
+        setError(outcome.message);
       }
+      // "cancelled" (user backed out of the native purchase sheet) is not
+      // an error — leave the screen as-is with no message.
     } finally {
       setPurchasingId(null);
+    }
+  }
+
+  async function handleRestore() {
+    setError(null);
+    setRestoring(true);
+    try {
+      const outcome = await restorePurchases();
+      if (outcome.status === "purchased" && outcome.isPremium) {
+        navigation.goBack();
+      } else if (outcome.status === "purchased") {
+        setError("Restored, but no active Premium subscription was found.");
+      } else if (outcome.status === "error") {
+        setError(outcome.message);
+      }
+    } finally {
+      setRestoring(false);
     }
   }
 
@@ -82,6 +106,13 @@ export function PaywallScreen({ navigation }: any) {
       )}
 
       {error && <Text style={styles.error}>{error}</Text>}
+
+      <Button
+        label="Restore purchases"
+        variant="ghost"
+        onPress={handleRestore}
+        loading={restoring}
+      />
 
       <Button
         label="Not now"
